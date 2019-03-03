@@ -1,0 +1,11 @@
+Package: com.noisyflake.shortcutenabler
+Name: ShortcutEnabler
+Depends: mobilesubstrate
+Architecture: iphoneos-arm
+Description: Enable the lockscreen flashlight / camera buttons on all devices.
+Depiction: https://apt.noisyflake.com/depictions/index.html?id=com.noisyflake.shortcutenabler
+Maintainer: NoisyFlake
+Author: NoisyFlake
+Section: Tweaks
+Version: 1.0.0
+Installed-Size: 244
