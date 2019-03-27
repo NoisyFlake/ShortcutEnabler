@@ -4,3 +4,10 @@
 @interface SEListController : PSListController
 
 @end
+
+@interface ShortcutEnablerLogo : PSTableCell {
+	UILabel *background;
+	UILabel *tweakName;
+	UILabel *version;
+}
+@end
