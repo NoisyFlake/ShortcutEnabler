@@ -3,8 +3,6 @@
 @end
 
 @interface SBDashBoardQuickActionsView : UIView
--(void)fireActionForButton:(id)arg1;
--(void)touchEndedForButton:(id)arg1 ;
--(void)_launchCamera;
 - (void)_layoutQuickActionButtons;
+- (void)handleButtonPress:(id)arg1 ;
 @end

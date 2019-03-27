@@ -17,14 +17,6 @@ static BOOL settingsUpdated = NO;
 - (BOOL)hasFlashlight {
 	return showFlashlight;
 }
-
-- (void)touchBeganForButton:(id)arg1 {
-	if (!require3DTouch) {
-		[self fireActionForButton:arg1];
-	} else {
-		%orig(arg1);
-	}
-}
 %end
 
 %hook SBDashBoardQuickActionsView
@@ -56,6 +48,14 @@ static BOOL settingsUpdated = NO;
 	if (settingsUpdated) {
 		[self _layoutQuickActionButtons];
 		settingsUpdated = NO;
+	}
+}
+
+-(void)handleButtonTouchBegan:(id)arg1 {
+	if (!require3DTouch) {
+		[self handleButtonPress:arg1];
+	} else {
+		%orig(arg1);
 	}
 }
 %end
