@@ -23,17 +23,26 @@ static BOOL settingsUpdated = NO;
 - (void)_layoutQuickActionButtons {
 	%orig;
 	for (UIView *subview in self.subviews) {
+
 		if (subview.frame.origin.x < 50) {
 			CGRect flashlight = subview.frame;
-			flashlight = CGRectMake(46 + flashlightX, (flashlight.origin.y - 90) + flashlightY, 50, 50);
+
+			// Fix for Jumper: The extra buttons are already aligned above the original ones, so don't change their Y position
+			CGFloat flashlightOffset = subview.alpha > 0 ? (flashlight.origin.y - 90 + flashlightY) : flashlight.origin.y;
+
+			flashlight = CGRectMake(46 + flashlightX, flashlightOffset, 50, 50);
 
 			subview.frame = flashlight;
 			[subview sb_removeAllSubviews];
 			[subview init];
 		} else if (subview.frame.origin.x > 100) {
-			CGFloat _screenWidth = subview.frame.origin.x + subview.frame.size.width / 2;
+			CGFloat _screenWidth = [UIScreen mainScreen].bounds.size.width;
 			CGRect camera = subview.frame;
-			camera = CGRectMake((_screenWidth - 96) + cameraX, (camera.origin.y - 90) + cameraY, 50, 50);
+
+			// Fix for Jumper: The extra buttons are already aligned above the original ones, so don't change their Y position
+			CGFloat cameraOffset = subview.alpha > 0 ? (camera.origin.y - 90 + cameraY) : camera.origin.y;
+
+			camera = CGRectMake((_screenWidth - 96) + cameraX, cameraOffset, 50, 50);
 
 			subview.frame = camera;
 			[subview sb_removeAllSubviews];
