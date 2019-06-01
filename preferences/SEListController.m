@@ -31,7 +31,7 @@
 	[[UIApplication sharedApplication] openURL:[NSURL URLWithString: @"https://www.paypal.me/noisyflake"]];
 }
 
--(void)_returnKeyPressed:(UIKeyboard *)keyboard {
+-(void)_returnKeyPressed:(id)keyboard {
     [self.view endEditing:YES];
 
     [super _returnKeyPressed:keyboard];
@@ -69,7 +69,7 @@
         version.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
         version.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:15.0f];
         version.textColor = [UIColor whiteColor];
-        version.text = @"Version 1.1.3";
+        version.text = @"Version 1.1.4";
         version.backgroundColor = [UIColor clearColor];
         version.textAlignment = NSTextAlignmentCenter;
 
