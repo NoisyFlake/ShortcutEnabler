@@ -35,7 +35,7 @@ static BOOL settingsUpdated = NO;
 			subview.frame = flashlight;
 			[subview sb_removeAllSubviews];
 			[subview init];
-		} else if (subview.frame.origin.x > 100) {
+		} else {
 			CGFloat _screenWidth = [UIScreen mainScreen].bounds.size.width;
 			CGRect camera = subview.frame;
 
@@ -61,11 +61,7 @@ static BOOL settingsUpdated = NO;
 }
 
 -(void)handleButtonTouchBegan:(id)arg1 {
-	if (!require3DTouch) {
-		[self handleButtonPress:arg1];
-	} else {
-		%orig(arg1);
-	}
+	require3DTouch ? %orig(arg1) : [self handleButtonPress:arg1];  
 }
 %end
 
