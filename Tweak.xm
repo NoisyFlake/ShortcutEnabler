@@ -5,9 +5,7 @@ static double flashlightX, flashlightY, cameraX, cameraY;
 
 static BOOL settingsUpdated = NO;
 
-%group iOS11_12
-
-%hook SBDashBoardQuickActionsViewController
+%hook ControllerClass
 + (BOOL)deviceSupportsButtons {
 	return YES;
 }
@@ -21,10 +19,10 @@ static BOOL settingsUpdated = NO;
 }
 %end
 
-%hook SBDashBoardQuickActionsView
+%hook ViewClass
 - (void)_layoutQuickActionButtons {
 	%orig;
-	for (UIView *subview in self.subviews) {
+	for (UIView *subview in ((UIView*)self).subviews) {
 
 		if (subview.frame.origin.x < 50) {
 			CGRect flashlight = subview.frame;
@@ -63,69 +61,9 @@ static BOOL settingsUpdated = NO;
 }
 
 -(void)handleButtonTouchBegan:(id)arg1 {
-	require3DTouch ? %orig(arg1) : [self handleButtonPress:arg1];  
+	require3DTouch ? %orig(arg1) : [self handleButtonPress:arg1];
 }
 %end
-%end 
-
-%group iOS13 
-
-%hook CSQuickActionsViewController
-+ (BOOL)deviceSupportsButtons {
-	return YES;
-}
-
-- (BOOL)hasCamera {
-	return showCamera;
-}
-
-- (BOOL)hasFlashlight {
-	return showFlashlight;
-}
-%end
-
-%hook CSQuickActionsView
-- (void)_layoutQuickActionButtons {
-	%orig;
-	for (UIView *subview in self.subviews) {
-
-		if (subview.frame.origin.x < 50) {
-			CGRect flashlight = subview.frame;
-
-			// Fix for Jumper: The extra buttons are already aligned above the original ones, so don't change their Y position
-			CGFloat flashlightOffset = subview.alpha > 0 ? (flashlight.origin.y - 90 + flashlightY) : flashlight.origin.y;
-
-			flashlight = CGRectMake(46 + flashlightX, flashlightOffset, 50, 50);
-
-			subview.frame = flashlight;
-			[subview sb_removeAllSubviews];
-			[subview init];
-		} else {
-			CGFloat _screenWidth = [UIScreen mainScreen].bounds.size.width;
-			CGRect camera = subview.frame;
-
-			// Fix for Jumper: The extra buttons are already aligned above the original ones, so don't change their Y position
-			CGFloat cameraOffset = subview.alpha > 0 ? (camera.origin.y - 90 + cameraY) : camera.origin.y;
-
-			camera = CGRectMake((_screenWidth - 96) + cameraX, cameraOffset, 50, 50);
-
-			subview.frame = camera;
-			[subview sb_removeAllSubviews];
-			[subview init];
-		}
-	}
-}
--(void)_addOrRemoveCameraButtonIfNecessary {
-	%orig;
-
-	// Necessary to change the position of the buttons without a respring
-	if (settingsUpdated) {
-		[self _layoutQuickActionButtons];
-		settingsUpdated = NO;
-	}
-}
-%end
-%end 
 
 static void loadPrefs() {
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.noisyflake.shortcutenabler.plist"];
@@ -160,10 +98,17 @@ static void initPrefs() {
 	CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), NULL, (CFNotificationCallback)loadPrefs, CFSTR("com.noisyflake.shortcutenabler/prefsupdated"), NULL, CFNotificationSuspensionBehaviorCoalesce);
 	initPrefs();
 	loadPrefs();
-	if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"13.0")) {
-		%init(iOS13)
+
+	Class controllerClass;
+	Class viewClass;
+
+	if (@available(iOS 13, *)) {
+		controllerClass = %c(CSQuickActionsViewController);
+		viewClass = %c(CSQuickActionsView);
+	} else {
+		controllerClass = %c(SBDashBoardQuickActionsViewController);
+		viewClass = %c(SBDashBoardQuickActionsView);
 	}
-	else {
-		%init(iOS11_12)
-	}
+
+	%init(ControllerClass=controllerClass,ViewClass=viewClass);
 }

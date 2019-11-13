@@ -28,7 +28,7 @@
 }
 
 -(void)paypal {
-	[[UIApplication sharedApplication] openURL:[NSURL URLWithString: @"https://www.paypal.me/noisyflake"]];
+	[[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://www.paypal.me/noisyflake"] options:@{} completionHandler:nil];
 }
 
 -(void)_returnKeyPressed:(id)keyboard {
