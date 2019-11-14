@@ -1,9 +1,7 @@
 #import "Tweak.h"
 
 static BOOL showFlashlight, showCamera, require3DTouch;
-static double flashlightX, flashlightY, cameraX, cameraY;
-
-static BOOL settingsUpdated = NO;
+static CGFloat flashlightX, flashlightY, cameraX, cameraY;
 
 %hook ControllerClass
 + (BOOL)deviceSupportsButtons {
@@ -19,45 +17,37 @@ static BOOL settingsUpdated = NO;
 }
 %end
 
+static inline CGFloat GetButtonSize(CGRect screenBounds) {
+	if (screenBounds.size.height > 812) return 58;
+	if (screenBounds.size.height >= 736) return 50;
+	return 42;
+}
+
 %hook ViewClass
 - (void)_layoutQuickActionButtons {
-	%orig;
-	for (UIView *subview in ((UIView*)self).subviews) {
+	UIEdgeInsets insets = [self _buttonOutsets];
+	[((SBFTouchPassThroughView *)self).flashlightButton setEdgeInsets:insets];
+	[((SBFTouchPassThroughView *)self).cameraButton setEdgeInsets:insets];
 
-		if (subview.frame.origin.x < 50) {
-			CGRect flashlight = subview.frame;
+	UIUserInterfaceLayoutDirection layoutDirection = [UIApplication sharedApplication].userInterfaceLayoutDirection;
+	CGRect _referenceBounds = [UIScreen mainScreen]._referenceBounds;
+	CGFloat buttonSize = GetButtonSize(_referenceBounds);
+	CGFloat xOffsetPadding = layoutDirection == UIUserInterfaceLayoutDirectionRightToLeft ? insets.right : insets.left;
+	CGFloat buttonWidth = buttonSize + insets.right + insets.left;
+	CGFloat buttonHeight = buttonSize + insets.top + insets.bottom;
+	CGFloat offsetY = _referenceBounds.size.height - buttonHeight - insets.bottom;
 
-			// Fix for Jumper: The extra buttons are already aligned above the original ones, so don't change their Y position
-			CGFloat flashlightOffset = subview.alpha > 0 ? (flashlight.origin.y - 90 + flashlightY) : flashlight.origin.y;
-
-			flashlight = CGRectMake(46 + flashlightX, flashlightOffset, 50, 50);
-
-			subview.frame = flashlight;
-			[subview sb_removeAllSubviews];
-			[subview init];
-		} else {
-			CGFloat _screenWidth = [UIScreen mainScreen].bounds.size.width;
-			CGRect camera = subview.frame;
-
-			// Fix for Jumper: The extra buttons are already aligned above the original ones, so don't change their Y position
-			CGFloat cameraOffset = subview.alpha > 0 ? (camera.origin.y - 90 + cameraY) : camera.origin.y;
-
-			camera = CGRectMake((_screenWidth - 96) + cameraX, cameraOffset, 50, 50);
-
-			subview.frame = camera;
-			[subview sb_removeAllSubviews];
-			[subview init];
-		}
+	CGRect flashLightRect;
+	CGRect cameraRect;
+	if (layoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
+		flashLightRect = CGRectMake(_referenceBounds.size.width - xOffsetPadding - buttonWidth + flashlightX, offsetY + flashlightY, buttonWidth, buttonHeight);
+		cameraRect = CGRectMake(xOffsetPadding + cameraX, offsetY + cameraY, buttonWidth, buttonHeight);
+	} else {
+		flashLightRect = CGRectMake(xOffsetPadding + flashlightX, offsetY + flashlightY, buttonWidth, buttonHeight);
+		cameraRect = CGRectMake(_referenceBounds.size.width - xOffsetPadding - buttonHeight + cameraX, offsetY + cameraY, buttonWidth, buttonHeight);
 	}
-}
--(void)_addOrRemoveCameraButtonIfNecessary {
-	%orig;
-
-	// Necessary to change the position of the buttons without a respring
-	if (settingsUpdated) {
-		[self _layoutQuickActionButtons];
-		settingsUpdated = NO;
-	}
+	((SBFTouchPassThroughView *)self).flashlightButton.frame = flashLightRect;
+	((SBFTouchPassThroughView *)self).cameraButton.frame = cameraRect;
 }
 
 -(void)handleButtonTouchBegan:(id)arg1 {
@@ -69,6 +59,11 @@ static void loadPrefs() {
 	NSMutableDictionary *prefs = [[NSMutableDictionary alloc] initWithContentsOfFile:@"/var/mobile/Library/Preferences/com.noisyflake.shortcutenabler.plist"];
 
 	if (prefs) {
+		CGFloat prevFlashlightX = flashlightX;
+		CGFloat prevFlashlightY = flashlightY;
+		CGFloat prevCameraX = cameraX;
+		CGFloat prevCameraY = cameraY;
+
 		showFlashlight = ( [prefs objectForKey:@"showFlashlight"] ? [[prefs objectForKey:@"showFlashlight"] boolValue] : YES );
 		showCamera = ( [prefs objectForKey:@"showCamera"] ? [[prefs objectForKey:@"showCamera"] boolValue] : YES );
 		require3DTouch = ( [prefs objectForKey:@"require3DTouch"] ? [[prefs objectForKey:@"require3DTouch"] boolValue] : YES );
@@ -78,7 +73,20 @@ static void loadPrefs() {
 		cameraX = ( [prefs objectForKey:@"cameraX"] ? [[prefs objectForKey:@"cameraX"] doubleValue] : 0 );
 		cameraY = ( [prefs objectForKey:@"cameraY"] ? [[prefs objectForKey:@"cameraY"] doubleValue] : 0 );
 
-		settingsUpdated = YES;
+		// force update the layout if preferences changed
+		if (prevFlashlightX != flashlightX || prevFlashlightY != flashlightY || prevCameraX != cameraX || prevCameraY != cameraY) {
+
+			if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"13.0")) {
+				CSCoverSheetViewController *controller = [%c(SBLockScreenManager) sharedInstanceIfExists].coverSheetViewController;
+				CSQuickActionsViewController *quickActionsViewController = [controller valueForKey:@"_quickActionsViewController"];
+				[[quickActionsViewController quickActionsViewIfLoaded] _layoutQuickActionButtons];
+			} else {
+				SBDashBoardViewController *controller = [%c(SBLockScreenManager) sharedInstanceIfExists].dashBoardViewController;
+				SBDashBoardQuickActionsViewController *quickActionsViewController = [controller valueForKey:@"_quickActionsViewController"];
+				[[quickActionsViewController quickActionsViewIfLoaded] _layoutQuickActionButtons];
+
+			}
+		}
 	}
 
 	[prefs release];
@@ -102,7 +110,7 @@ static void initPrefs() {
 	Class controllerClass;
 	Class viewClass;
 
-	if (@available(iOS 13, *)) {
+	if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"13.0")) {
 		controllerClass = %c(CSQuickActionsViewController);
 		viewClass = %c(CSQuickActionsView);
 	} else {

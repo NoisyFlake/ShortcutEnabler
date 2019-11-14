@@ -1,4 +1,5 @@
 #include "SEListController.h"
+#include "NSTask.h"
 
 @implementation SEListController
 
@@ -52,6 +53,8 @@
         [background layoutIfNeeded];
         background.backgroundColor = [UIColor colorWithRed:1.00 green:0.58 blue:0.00 alpha:1.0];
         background.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
+        [self addSubview:background];
+
 
         CGRect tweakNameFrame = CGRectMake(0, -40, width, height);
         tweakName = [[UILabel alloc] initWithFrame:tweakNameFrame];
@@ -62,20 +65,40 @@
         tweakName.textColor = [UIColor whiteColor];
         tweakName.text = @"ShortcutEnabler";
         tweakName.textAlignment = NSTextAlignmentCenter;
-
-        CGRect versionFrame = CGRectMake(0, -5, width, height);
-        version = [[UILabel alloc] initWithFrame:versionFrame];
-        version.numberOfLines = 1;
-        version.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
-        version.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:15.0f];
-        version.textColor = [UIColor whiteColor];
-        version.text = @"Version 1.1.5";
-        version.backgroundColor = [UIColor clearColor];
-        version.textAlignment = NSTextAlignmentCenter;
-
-        [self addSubview:background];
         [self addSubview:tweakName];
-        [self addSubview:version];
+
+        NSPipe *pipe = [NSPipe pipe];
+
+        NSTask *task = [[NSTask alloc] init];
+        task.arguments = @[@"list", @"com.noisyflake.cozybadges"];
+        task.launchPath = @"/usr/bin/apt";
+        [task setStandardOutput: pipe];
+        [task launch];
+        [task waitUntilExit];
+
+        NSFileHandle *file = [pipe fileHandleForReading];
+        NSData *output = [file readDataToEndOfFile];
+        NSString *outputString = [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding];
+        [file closeFile];
+
+        if ([outputString containsString:@"com.noisyflake"]) {
+            NSArray *splitFirst = [outputString componentsSeparatedByString:@"com.noisyflake.cozybadges/now "];
+            NSString *line = [splitFirst objectAtIndex:1];
+            NSArray *splitSecond = [line componentsSeparatedByString:@" iphoneos"];
+            NSString *versionString = [splitSecond objectAtIndex:0];
+
+            CGRect versionFrame = CGRectMake(0, -5, width, height);
+            version = [[UILabel alloc] initWithFrame:versionFrame];
+            version.numberOfLines = 1;
+            version.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
+            version.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:15.0f];
+            version.textColor = [UIColor whiteColor];
+            version.text = [NSString stringWithFormat:@"Version %@", versionString];
+            version.backgroundColor = [UIColor clearColor];
+            version.textAlignment = NSTextAlignmentCenter;
+            [self addSubview:version];
+        }
+
     }
     return self;
 }
