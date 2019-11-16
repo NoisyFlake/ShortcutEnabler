@@ -6,7 +6,6 @@
 @end
 
 @interface SEListController : PSListController
-
 @end
 
 @interface ShortcutEnablerLogo : PSTableCell {

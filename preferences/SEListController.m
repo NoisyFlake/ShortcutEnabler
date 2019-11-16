@@ -67,37 +67,52 @@
         tweakName.textAlignment = NSTextAlignmentCenter;
         [self addSubview:tweakName];
 
-        NSPipe *pipe = [NSPipe pipe];
+        CGRect versionFrame = CGRectMake(0, -5, width, height);
+        version = [[UILabel alloc] initWithFrame:versionFrame];
+        version.numberOfLines = 1;
+        version.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
+        version.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:15.0f];
+        version.textColor = [UIColor colorWithRed:1.00 green:1.00 blue:1.00 alpha:0.5];
+        version.backgroundColor = [UIColor clearColor];
+        version.textAlignment = NSTextAlignmentCenter;
+        version.alpha = 0;
+        [self addSubview:version];
 
-        NSTask *task = [[NSTask alloc] init];
-        task.arguments = @[@"list", @"com.noisyflake.cozybadges"];
-        task.launchPath = @"/usr/bin/apt";
-        [task setStandardOutput: pipe];
-        [task launch];
-        [task waitUntilExit];
+        dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            NSString *versionString = @"Version unknown";
+            NSPipe *pipe = [NSPipe pipe];
 
-        NSFileHandle *file = [pipe fileHandleForReading];
-        NSData *output = [file readDataToEndOfFile];
-        NSString *outputString = [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding];
-        [file closeFile];
+            NSTask *task = [[NSTask alloc] init];
+            task.arguments = @[@"list", @"com.noisyflake.shortcutenabler"];
+            task.launchPath = @"/usr/bin/apt";
+            [task setStandardOutput: pipe];
+            [task launch];
+            [task waitUntilExit];
 
-        if ([outputString containsString:@"com.noisyflake"]) {
-            NSArray *splitFirst = [outputString componentsSeparatedByString:@"com.noisyflake.cozybadges/now "];
-            NSString *line = [splitFirst objectAtIndex:1];
-            NSArray *splitSecond = [line componentsSeparatedByString:@" iphoneos"];
-            NSString *versionString = [splitSecond objectAtIndex:0];
+            NSFileHandle *file = [pipe fileHandleForReading];
+            NSData *output = [file readDataToEndOfFile];
+            NSString *outputString = [[NSString alloc] initWithData:output encoding:NSUTF8StringEncoding];
+            [file closeFile];
 
-            CGRect versionFrame = CGRectMake(0, -5, width, height);
-            version = [[UILabel alloc] initWithFrame:versionFrame];
-            version.numberOfLines = 1;
-            version.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
-            version.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:15.0f];
-            version.textColor = [UIColor whiteColor];
-            version.text = [NSString stringWithFormat:@"Version %@", versionString];
-            version.backgroundColor = [UIColor clearColor];
-            version.textAlignment = NSTextAlignmentCenter;
-            [self addSubview:version];
-        }
+            if ([outputString containsString:@"com.noisyflake"]) {
+                NSArray *splitFirst = [outputString componentsSeparatedByString:@"/now "];
+                if ([splitFirst count] > 1) {
+                    NSString *line = [splitFirst objectAtIndex:1];
+                    NSArray *splitSecond = [line componentsSeparatedByString:@" iphoneos"];
+                    if ([splitSecond count] > 1) {
+                        versionString = [NSString stringWithFormat:@"Version %@", [splitSecond objectAtIndex:0]];
+                    }
+                }
+            }
+
+            dispatch_async(dispatch_get_main_queue(), ^(void){
+                    // Update label on the main queue
+                    version.text = versionString;
+                    [UIView animateWithDuration:0.75 delay:0 options:UIViewAnimationOptionCurveEaseIn animations:^{
+                        version.alpha = 1;
+                    } completion:nil];
+                });
+        });
 
     }
     return self;
