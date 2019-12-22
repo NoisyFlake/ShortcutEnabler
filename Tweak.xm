@@ -64,14 +64,14 @@ static void loadPrefs() {
 		CGFloat prevCameraX = cameraX;
 		CGFloat prevCameraY = cameraY;
 
-		showFlashlight = ( [prefs objectForKey:@"showFlashlight"] ? [[prefs objectForKey:@"showFlashlight"] boolValue] : YES );
-		showCamera = ( [prefs objectForKey:@"showCamera"] ? [[prefs objectForKey:@"showCamera"] boolValue] : YES );
-		require3DTouch = ( [prefs objectForKey:@"require3DTouch"] ? [[prefs objectForKey:@"require3DTouch"] boolValue] : YES );
+		showFlashlight = ( [[prefs objectForKey:@"showFlashlight"] boolValue]);
+		showCamera = ( [[prefs objectForKey:@"showCamera"] boolValue]);
+		require3DTouch = ([[prefs objectForKey:@"require3DTouch"] boolValue]);
 
-		flashlightX = ( [prefs objectForKey:@"flashlightX"] ? [[prefs objectForKey:@"flashlightX"] doubleValue] : 0 );
-		flashlightY = ( [prefs objectForKey:@"flashlightY"] ? [[prefs objectForKey:@"flashlightY"] doubleValue] : 0 );
-		cameraX = ( [prefs objectForKey:@"cameraX"] ? [[prefs objectForKey:@"cameraX"] doubleValue] : 0 );
-		cameraY = ( [prefs objectForKey:@"cameraY"] ? [[prefs objectForKey:@"cameraY"] doubleValue] : 0 );
+		flashlightX = ( [[prefs objectForKey:@"flashlightX"] doubleValue]);
+		flashlightY = ( [[prefs objectForKey:@"flashlightY"] doubleValue]);
+		cameraX = ( [[prefs objectForKey:@"cameraX"] doubleValue]);
+		cameraY = ( [[prefs objectForKey:@"cameraY"] doubleValue]);
 
 		// force update the layout if preferences changed
 		if (prevFlashlightX != flashlightX || prevFlashlightY != flashlightY || prevCameraX != cameraX || prevCameraY != cameraY) {
