@@ -17,10 +17,6 @@
 -(SBFTouchPassThroughView *)quickActionsViewIfLoaded;
 @end
 
-@interface UIScreen (ShortcutEnablerPrivate)
-@property (nonatomic, readonly) CGRect _referenceBounds;
-@end
-
 @interface SBDashBoardViewController : UIViewController
 @end
 

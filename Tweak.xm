@@ -17,37 +17,15 @@ static CGFloat flashlightX, flashlightY, cameraX, cameraY;
 }
 %end
 
-static inline CGFloat GetButtonSize(CGRect screenBounds) {
-	if (screenBounds.size.height > 812) return 58;
-	if (screenBounds.size.height >= 736) return 50;
-	return 42;
-}
 
 %hook ViewClass
 - (void)_layoutQuickActionButtons {
 	UIEdgeInsets insets = [self _buttonOutsets];
-	[((SBFTouchPassThroughView *)self).flashlightButton setEdgeInsets:insets];
-	[((SBFTouchPassThroughView *)self).cameraButton setEdgeInsets:insets];
-
-	UIUserInterfaceLayoutDirection layoutDirection = [UIApplication sharedApplication].userInterfaceLayoutDirection;
-	CGRect _referenceBounds = [UIScreen mainScreen]._referenceBounds;
-	CGFloat buttonSize = GetButtonSize(_referenceBounds);
-	CGFloat xOffsetPadding = layoutDirection == UIUserInterfaceLayoutDirectionRightToLeft ? insets.right : insets.left;
-	CGFloat buttonWidth = buttonSize + insets.right + insets.left;
-	CGFloat buttonHeight = buttonSize + insets.top + insets.bottom;
-	CGFloat offsetY = _referenceBounds.size.height - buttonHeight - insets.bottom;
-
-	CGRect flashLightRect;
-	CGRect cameraRect;
-	if (layoutDirection == UIUserInterfaceLayoutDirectionRightToLeft) {
-		flashLightRect = CGRectMake(_referenceBounds.size.width - xOffsetPadding - buttonWidth + flashlightX, offsetY + flashlightY, buttonWidth, buttonHeight);
-		cameraRect = CGRectMake(xOffsetPadding + cameraX, offsetY + cameraY, buttonWidth, buttonHeight);
-	} else {
-		flashLightRect = CGRectMake(xOffsetPadding + flashlightX, offsetY + flashlightY, buttonWidth, buttonHeight);
-		cameraRect = CGRectMake(_referenceBounds.size.width - xOffsetPadding - buttonHeight + cameraX, offsetY + cameraY, buttonWidth, buttonHeight);
-	}
-	((SBFTouchPassThroughView *)self).flashlightButton.frame = flashLightRect;
-	((SBFTouchPassThroughView *)self).cameraButton.frame = cameraRect;
+    	CGRect screenBounds = [UIScreen mainScreen].bounds;
+	CGFloat offsetY = screenBounds.size.height - 90 - insets.top;
+	
+    	((SBFTouchPassThroughView *)self).flashlightButton.frame = CGRectMake(46 + flashlightX, offsetY + flashlightY, 50, 50);
+	((SBFTouchPassThroughView *)self).cameraButton.frame = CGRectMake(screenBounds.size.width - 96 + cameraX, offsetY + cameraY, 50, 50);
 }
 
 -(void)handleButtonTouchBegan:(id)arg1 {
